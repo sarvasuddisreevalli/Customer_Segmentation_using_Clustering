@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SegmentAI — Enterprise Customer Intelligence Portal</title>
+    <!-- Google Fonts & FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Plotly.js for interactive charts -->
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- TOP NAVBAR (GoDaddy / Swiggy Style Modern Dark Header) -->
+    <header class="top-navbar">
+        <div class="nav-container">
+            <!-- Brand Logo -->
+            <a href="#" class="brand-logo" onclick="switchTab('home')">
+                <div class="logo-icon"><i class="fa-solid fa-chart-pie"></i></div>
+                <div class="logo-text">Segment<span>AI</span> <span class="badge-country">PRO</span></div>
+            </a>
+
+            <!-- Desktop Nav Links -->
+            <nav class="nav-links">
+                <a href="#home" class="nav-item active" onclick="switchTab('home')">Overview <i class="fa-solid fa-chevron-down"></i></a>
+                <a href="#data" class="nav-item" onclick="switchTab('data')">Data Center <i class="fa-solid fa-chevron-down"></i></a>
+                <a href="#eda" class="nav-item" onclick="switchTab('eda')">Analytics <i class="fa-solid fa-chevron-down"></i></a>
+                <a href="#clustering" class="nav-item" onclick="switchTab('clustering')">ML Studio <i class="fa-solid fa-chevron-down"></i></a>
+                <a href="#personas" class="nav-item" onclick="switchTab('personas')">Personas <i class="fa-solid fa-chevron-down"></i></a>
+                <a href="#insights" class="nav-item" onclick="switchTab('insights')">Insights <i class="fa-solid fa-chevron-down"></i></a>
+                <a href="#viva" class="nav-item" onclick="switchTab('viva')">Academic <i class="fa-solid fa-chevron-down"></i></a>
+            </nav>
+
+            <!-- Search & Action Icons -->
+            <div class="nav-actions">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Search segments, metrics...">
+                </div>
+
+                <div class="metric-badge" title="Identified Customer Cohorts">
+                    <i class="fa-solid fa-layer-group"></i> <span>4 Clusters</span>
+                </div>
+
+                <!-- Sign In / User Profile Dropdown -->
+                <div class="user-dropdown-container">
+                    <button class="user-btn" id="userMenuBtn" onclick="toggleUserDropdown()">
+                        <i class="fa-solid fa-circle-user"></i>
+                        <span id="navUserName">Sign In</span>
+                        <i class="fa-solid fa-angle-down"></i>
+                    </button>
+                    <div class="user-dropdown-menu" id="userDropdownMenu">
+                        <div class="user-dropdown-header" id="userDropdownHeader">
+                            <p class="user-dp-name">Guest User</p>
+                            <p class="user-dp-email">guest@segmentai.io</p>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" onclick="openLoginModal()"><i class="fa-solid fa-right-to-bracket"></i> Sign In / Switch Account</a>
+                        <a href="#" onclick="switchTab('clustering')"><i class="fa-solid fa-sliders"></i> ML Model Settings</a>
+                        <a href="#" onclick="switchTab('viva')"><i class="fa-solid fa-book-open"></i> Viva Revision Guide</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="logout-link" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Sign Out / Logout</a>
+                    </div>
+                </div>
+
+                <!-- Mobile Hamburger Button -->
+                <button class="hamburger-btn" onclick="toggleMobileMenu()">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MOBILE DRAWER MENU (Phone View) -->
+    <div class="mobile-drawer" id="mobileDrawer">
+        <div class="drawer-header">
+            <div class="brand-logo">
+                <div class="logo-icon"><i class="fa-solid fa-chart-pie"></i></div>
+                <div class="logo-text">Segment<span>AI</span></div>
+            </div>
+            <button class="close-btn" onclick="toggleMobileMenu()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="drawer-body">
+            <div class="mobile-user-card" id="mobileUserCard">
+                <i class="fa-solid fa-user-circle"></i>
+                <div>
+                    <p class="m-user-name" id="mUserName">Guest Evaluator</p>
+                    <p class="m-user-role">Role: Project Reviewer</p>
+                </div>
+            </div>
+            <div class="mobile-nav-links">
+                <a href="#home" onclick="mobileSwitchTab('home')"><i class="fa-solid fa-house"></i> Overview</a>
+                <a href="#data" onclick="mobileSwitchTab('data')"><i class="fa-solid fa-database"></i> Data Center</a>
+                <a href="#eda" onclick="mobileSwitchTab('eda')"><i class="fa-solid fa-chart-simple"></i> Analytics (EDA)</a>
+                <a href="#clustering" onclick="mobileSwitchTab('clustering')"><i class="fa-solid fa-robot"></i> ML Studio</a>
+                <a href="#personas" onclick="mobileSwitchTab('personas')"><i class="fa-solid fa-users"></i> Customer Personas</a>
+                <a href="#insights" onclick="mobileSwitchTab('insights')"><i class="fa-solid fa-lightbulb"></i> Business Insights</a>
+                <a href="#viva" onclick="mobileSwitchTab('viva')"><i class="fa-solid fa-graduation-cap"></i> Academic Viva</a>
+            </div>
+            <div class="mobile-drawer-footer">
+                <button class="btn btn-secondary btn-block" onclick="openLoginModal(); toggleMobileMenu();"><i class="fa-solid fa-right-to-bracket"></i> Sign In</button>
+                <button class="btn btn-danger btn-block" onclick="handleLogout(); toggleMobileMenu();"><i class="fa-solid fa-power-off"></i> Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <main class="main-content">
+
+        <!-- SECTION 1: OVERVIEW / DASHBOARD HOME -->
+        <section id="sec-home" class="tab-section active">
+            <div class="hero-banner">
+                <div class="hero-content">
+                    <span class="pill-badge"><i class="fa-solid fa-sparkles"></i> Unsupervised Machine Learning Portal</span>
+                    <h1>CUSTOMER SEGMENTATION USING CLUSTERING</h1>
+                    <p>Automated demographic and behavioral customer profiling platform using K-Means, Hierarchical Agglomerative Clustering, and DBSCAN.</p>
+                </div>
+            </div>
+
+            <!-- Executive KPI Grid -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-icon blue"><i class="fa-solid fa-users"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-value" id="kpiTotalCust">400</div>
+                        <div class="kpi-label">Total Customers</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon green"><i class="fa-solid fa-sack-dollar"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-value" id="kpiAvgInc">$55.4k</div>
+                        <div class="kpi-label">Avg Annual Income</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon purple"><i class="fa-solid fa-basket-shopping"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-value" id="kpiAvgSpend">49.8/100</div>
+                        <div class="kpi-label">Avg Spending Score</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon orange"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-value" id="kpiAvgFreq">20.4/yr</div>
+                        <div class="kpi-label">Avg Purchase Freq</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon teal"><i class="fa-solid fa-bullseye"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-value" id="kpiOptClusters">K = 4</div>
+                        <div class="kpi-label">Optimal Cohorts</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overview Feature Cards -->
+            <div class="grid-2">
+                <div class="glass-card">
+                    <h3><i class="fa-solid fa-circle-check accent-blue"></i> Key System Objectives</h3>
+                    <ul class="feature-list">
+                        <li><i class="fa-solid fa-check"></i> Automated Data Cleaning, Imputation, & StandardScaler normalization.</li>
+                        <li><i class="fa-solid fa-check"></i> Multi-algorithm benchmarking: K-Means, Agglomerative Hierarchical, and DBSCAN.</li>
+                        <li><i class="fa-solid fa-check"></i> Optimal cluster evaluation via WCSS Elbow Method & Silhouette Scores.</li>
+                        <li><i class="fa-solid fa-check"></i> Automated segment persona generation & targeted business recommendations.</li>
+                    </ul>
+                </div>
+                <div class="glass-card">
+                    <h3><i class="fa-solid fa-microchip accent-purple"></i> Technology Stack</h3>
+                    <div class="tech-tags">
+                        <span class="tag">Python 3.10+</span>
+                        <span class="tag">Scikit-Learn</span>
+                        <span class="tag">Pandas & NumPy</span>
+                        <span class="tag">Flask Engine</span>
+                        <span class="tag">Plotly.js 3D</span>
+                        <span class="tag">HTML5 & CSS3</span>
+                        <span class="tag">Responsive Mobile UI</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: DATA CENTER -->
+        <section id="sec-data" class="tab-section">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-database accent-blue"></i> Customer Data Center</h2>
+                <p>Inspect raw records, audit missing values, or upload custom CSV datasets.</p>
+            </div>
+
+            <div class="upload-zone" id="uploadZone">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <h3>Drag & Drop Custom Customer Dataset CSV</h3>
+                <p>Or click to select a file from your device</p>
+                <input type="file" id="csvFileInput" accept=".csv" onchange="uploadCSVFile(this.files[0])" hidden>
+                <button class="btn btn-primary" onclick="document.getElementById('csvFileInput').click()"><i class="fa-solid fa-folder-open"></i> Browse File</button>
+            </div>
+
+            <div class="glass-card table-card">
+                <div class="card-header-flex">
+                    <h3>Customer Dataset Preview</h3>
+                    <span class="badge" id="dataRecordCount">Showing 100 / 400 Records</span>
+                </div>
+                <div class="responsive-table-wrapper">
+                    <table class="custom-table" id="customerDataTable">
+                        <thead>
+                            <tr id="tableHeaderRow"><th>CustomerID</th><th>Gender</th><th>Age</th><th>Income</th><th>Spending</th></tr>
+                        </thead>
+                        <tbody id="tableBodyRow">
+                            <!-- Filled dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: ANALYTICS (EDA) -->
+        <section id="sec-eda" class="tab-section">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-chart-pie accent-purple"></i> Exploratory Data Analysis (EDA)</h2>
+                <p>Interactive visualizations of demographic attributes, purchasing habits, and feature correlations.</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="glass-card">
+                    <h3><i class="fa-solid fa-chart-bar"></i> Income vs Spending Score Scatter</h3>
+                    <div id="chartIncomeSpend" class="chart-container"></div>
+                </div>
+                <div class="glass-card">
+                    <h3><i class="fa-solid fa-chart-line"></i> Age vs Spending Score Trend</h3>
+                    <div id="chartAgeSpend" class="chart-container"></div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="glass-card">
+                    <h3><i class="fa-solid fa-venus-mars"></i> Customer Gender Distribution</h3>
+                    <div id="chartGenderPie" class="chart-container"></div>
+                </div>
+                <div class="glass-card">
+                    <h3><i class="fa-solid fa-border-all"></i> Feature Correlation Heatmap</h3>
+                    <div id="chartHeatmap" class="chart-container"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: ML CLUSTERING STUDIO -->
+        <section id="sec-clustering" class="tab-section">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-robot accent-teal"></i> Machine Learning Clustering Studio</h2>
+                <p>Tune K-Means, Hierarchical, and DBSCAN hyperparameters in real-time.</p>
+            </div>
+
+            <!-- Controls Toolbar -->
+            <div class="controls-bar glass-card">
+                <div class="control-group">
+                    <label><i class="fa-solid fa-gears"></i> Algorithm:</label>
+                    <select id="algoSelect" onchange="triggerClustering()">
+                        <option value="K-Means" selected>K-Means Clustering</option>
+                        <option value="Hierarchical">Hierarchical Agglomerative</option>
+                        <option value="DBSCAN">DBSCAN (Density-Based)</option>
+                    </select>
+                </div>
+
+                <div class="control-group" id="groupClusters">
+                    <label><i class="fa-solid fa-sliders"></i> Clusters (K): <span id="kValDisplay">4</span></label>
+                    <input type="range" id="kSlider" min="2" max="10" value="4" oninput="document.getElementById('kValDisplay').innerText=this.value; triggerClustering();">
+                </div>
+
+                <div class="control-group hidden" id="groupDBSCAN">
+                    <label>Eps: <span id="epsValDisplay">0.75</span></label>
+                    <input type="range" id="epsSlider" min="0.2" max="2.0" step="0.05" value="0.75" oninput="document.getElementById('epsValDisplay').innerText=this.value; triggerClustering();">
+                    <label>Min Samples: <span id="minSampValDisplay">5</span></label>
+                    <input type="range" id="minSampSlider" min="2" max="15" value="5" oninput="document.getElementById('minSampValDisplay').innerText=this.value; triggerClustering();">
+                </div>
+
+                <button class="btn btn-primary" onclick="triggerClustering()"><i class="fa-solid fa-play"></i> Train Model</button>
+            </div>
+
+            <!-- Evaluation Gauges & Score Cards -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-label">Silhouette Score</div>
+                    <div class="kpi-value text-blue" id="resSilhouette">0.4200</div>
+                    <div class="kpi-sub">Target: Close to +1.0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Davies-Bouldin Index</div>
+                    <div class="kpi-value text-purple" id="resDB">0.9061</div>
+                    <div class="kpi-sub">Target: Lower is better</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Calinski-Harabasz</div>
+                    <div class="kpi-value text-green" id="resCH">350.06</div>
+                    <div class="kpi-sub">Target: Higher is better</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Noise Outliers (%)</div>
+                    <div class="kpi-value text-orange" id="resNoise">0.0%</div>
+                    <div class="kpi-sub">DBSCAN Outlier ratio</div>
+                </div>
+            </div>
+
+            <!-- Visualizations -->
+            <div class="grid-2">
+                <div class="glass-card">
+                    <h3><i class="fa-solid fa-cube"></i> 3D Interactive Feature Space</h3>
+                    <div id="chart3D" class="chart-container-lg"></div>
+                </div>
+                <div class="glass-card">
+                    <h3><i class="fa-solid fa-vector-square"></i> 2D Principal Component Projection (PCA)</h3>
+                    <div id="chartPCA" class="chart-container-lg"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: CUSTOMER PERSONAS -->
+        <section id="sec-personas" class="tab-section">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-users-viewfinder accent-orange"></i> Customer Segment Persona Profiling</h2>
+                <p>Data-driven customer cohort characteristics and demographics.</p>
+            </div>
+
+            <div id="personaCardsContainer" class="persona-grid">
+                <!-- Dynamic Persona Cards rendered here -->
+            </div>
+        </section>
+
+        <!-- SECTION 6: BUSINESS INSIGHTS -->
+        <section id="sec-insights" class="tab-section">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-lightbulb accent-yellow"></i> Actionable Business Recommendations</h2>
+                <p>Customized targeted marketing strategies derived from cluster metrics.</p>
+            </div>
+
+            <div id="insightsContainer">
+                <!-- Dynamic Insights Accordion -->
+            </div>
+        </section>
+
+        <!-- SECTION 7: ACADEMIC VIVA GUIDE -->
+        <section id="sec-viva" class="tab-section">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-graduation-cap accent-pink"></i> Academic Report & Viva Voce Guide</h2>
+                <p>Comprehensive project report, mathematical formulations, and interview preparation Q&A.</p>
+            </div>
+
+            <div class="glass-card">
+                <h3><i class="fa-solid fa-book"></i> Project Abstract & Problem Statement</h3>
+                <p>This project implements an <strong>unsupervised machine learning system</strong> for automated customer segmentation. Traditional manual customer classification fails to capture complex, multi-dimensional purchasing behaviors. By leveraging distance-based and density-based clustering algorithms, this system partitions customer records into distinct demographic and purchasing cohorts without needing manual ground-truth labels.</p>
+            </div>
+
+            <div class="glass-card mt-20">
+                <h3><i class="fa-solid fa-circle-question accent-blue"></i> Frequently Asked Viva Questions & Answers</h3>
+
+                <div class="viva-accordion">
+                    <div class="viva-item">
+                        <button class="viva-question" onclick="toggleViva(this)">Q1: Why is customer segmentation an unsupervised learning problem? <i class="fa-solid fa-chevron-down"></i></button>
+                        <div class="viva-answer"><p>Because customer datasets do not come with ground-truth target labels. The goal is to discover natural mathematical structure and grouping inherent in feature space without human supervision.</p></div>
+                    </div>
+                    <div class="viva-item">
+                        <button class="viva-question" onclick="toggleViva(this)">Q2: How does K-Means work step-by-step? <i class="fa-solid fa-chevron-down"></i></button>
+                        <div class="viva-answer"><p>1. Initialize K cluster centroids.<br>2. Assign each data point to its nearest centroid based on Euclidean distance.<br>3. Recalculate centroids as the mean of assigned points.<br>4. Repeat until centroids converge.</p></div>
+                    </div>
+                    <div class="viva-item">
+                        <button class="viva-question" onclick="toggleViva(this)">Q3: What is the Elbow Method? <i class="fa-solid fa-chevron-down"></i></button>
+                        <div class="viva-answer"><p>The Elbow Method plots Within-Cluster Sum of Squares (WCSS) against cluster count K. The point where WCSS reduction sharply slows down (forming an 'elbow') represents the optimal trade-off between compactness and cluster complexity.</p></div>
+                    </div>
+                    <div class="viva-item">
+                        <button class="viva-question" onclick="toggleViva(this)">Q4: Why is StandardScaler normalization mandatory? <i class="fa-solid fa-chevron-down"></i></button>
+                        <div class="viva-answer"><p>Distance-based algorithms (K-Means, DBSCAN) rely on Euclidean distance. If Income is in $100,000s and Age is in 10s, income would dominate distance calculations. StandardScaler rescales features to mean=0 and std=1.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- AUTHENTICATION LOGIN MODAL -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeLoginModal()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-header">
+                <div class="logo-icon"><i class="fa-solid fa-user-shield"></i></div>
+                <h2>Sign In to SegmentAI</h2>
+                <p>Access Enterprise Customer Intelligence Suite</p>
+            </div>
+            <form onsubmit="event.preventDefault(); submitLoginForm();">
+                <div class="form-group">
+                    <label><i class="fa-solid fa-envelope"></i> Username / Email</label>
+                    <input type="text" id="loginUser" value="admin" placeholder="admin" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-lock"></i> Password</label>
+                    <input type="password" id="loginPass" value="admin123" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-right-to-bracket"></i> Sign In to Portal</button>
+            </form>
+            <div class="modal-divider"><span>OR</span></div>
+            <button class="btn btn-secondary btn-block" onclick="quickDemoLogin()"><i class="fa-solid fa-bolt"></i> Quick One-Click Demo Access</button>
+        </div>
+    </div>
+
+    <!-- Custom App JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
