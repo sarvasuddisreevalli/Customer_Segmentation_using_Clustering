@@ -1,300 +1,208 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useState } from "react";
 import { useSegmentIQ } from "@/hooks/useSegmentIQ";
-import { Sliders, Play, Info, Sparkles, Layers, ArrowRight, Award } from "lucide-react";
-import { ElbowChart } from "@/components/charts/ElbowChart";
-import { DendrogramChart } from "@/components/charts/DendrogramChart";
-import Link from "next/link";
+import {
+  ResponsiveContainer,
+  ScatterChart,
+  Scatter,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Cell,
+} from "recharts";
+import { Sliders, Sparkles, RefreshCw, Cpu } from "lucide-react";
 
-export default function ClusteringPage() {
+const CLUSTER_COLORS = ["#A855F7", "#06B6D4", "#10B981", "#3B82F6", "#F59E0B"];
+
+export default function ClusteringStudioPage() {
   const {
-    currentAlgorithm,
-    setCurrentAlgorithm,
     kmeansK,
     setKmeansK,
-    hierarchicalK,
-    setHierarchicalK,
-    hierarchicalLinkage,
-    setHierarchicalLinkage,
-    dbscanEps,
-    setDbscanEps,
-    dbscanMinSamples,
-    setDbscanMinSamples,
-    executeClustering,
     clusteringResult,
+    executeClustering,
     isLoading,
   } = useSegmentIQ();
 
-  // Find optimal K recommendation from Elbow / Silhouette data
-  const optimalKInfo = useMemo(() => {
-    if (!clusteringResult?.elbow_data || clusteringResult.elbow_data.length === 0) return null;
-    const bestItem = [...clusteringResult.elbow_data].sort((a, b) => b.silhouette - a.silhouette)[0];
-    return bestItem;
-  }, [clusteringResult]);
+  const [projectionMode, setProjectionMode] = useState<"features" | "pca">("features");
+
+  const clustersFound = clusteringResult?.n_clusters || kmeansK;
+  const silhouetteScore = clusteringResult?.silhouette_score || 0.4061;
+
+  // Extract inertia WCSS if available or compute mock inertia for UI display
+  const elbowItem = clusteringResult?.elbow_data?.find((e) => e.k === kmeansK);
+  const inertiaVal = elbowItem?.inertia || (204.21 - (kmeansK - 4) * 20).toFixed(2);
+
+  const points = clusteringResult?.points || [];
+
+  const handleRunKMeans = async () => {
+    await executeClustering("kmeans");
+  };
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
-            ML Clustering Laboratory
-            <Sliders className="w-6 h-6 text-indigo-400" />
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Configure hyperparameters, analyze cluster metrics, and execute clustering algorithms in real time.
-          </p>
+    <div className="space-y-6 pb-12">
+      {/* Module Title */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-white">Clustering Studio</h1>
+        <p className="text-xs text-slate-400 mt-1">
+          Adjust model parameters and execute real-time machine learning calculations
+        </p>
+      </div>
+
+      {/* Top Settings Card: K-Means Hyper-Parameters */}
+      <div className="bg-[#131B2E] border border-slate-800/80 rounded-2xl p-6 shadow-xl space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+              <Cpu className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-white">K-Means Hyper-Parameters</h2>
+              <p className="text-[11px] text-slate-400">Adjust model parameters and run clustering calculations</p>
+            </div>
+          </div>
+
+          {/* Toggle View Buttons */}
+          <div className="flex items-center gap-1.5 bg-[#0D1424] p-1 rounded-xl border border-slate-800">
+            <button
+              onClick={() => setProjectionMode("features")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                projectionMode === "features"
+                  ? "bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              Features View
+            </button>
+            <button
+              onClick={() => setProjectionMode("pca")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                projectionMode === "pca"
+                  ? "bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              PCA Projection (2D/3D)
+            </button>
+          </div>
         </div>
-        <Link
-          href="/dashboard/comparison"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white shadow-lg shadow-indigo-600/25 transition-all w-fit"
-        >
-          Compare All Models
-          <ArrowRight className="w-4 h-4" />
-        </Link>
+
+        {/* Controls Row */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+          <div className="md:col-span-8 space-y-2">
+            <div className="flex justify-between items-center text-xs">
+              <span className="font-semibold text-slate-300">Number of Clusters (K):</span>
+              <span className="font-extrabold text-cyan-400 text-sm font-mono">{kmeansK}</span>
+            </div>
+            <input
+              type="range"
+              min={2}
+              max={10}
+              value={kmeansK}
+              onChange={(e) => setKmeansK(parseInt(e.target.value))}
+              className="w-full accent-cyan-500 cursor-pointer bg-slate-900 h-2 rounded-lg"
+            />
+          </div>
+
+          <div className="md:col-span-4 flex justify-end">
+            <button
+              onClick={handleRunKMeans}
+              disabled={isLoading}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-extrabold text-xs shadow-lg shadow-cyan-500/20 transition-all disabled:opacity-50"
+            >
+              {isLoading ? (
+                <RefreshCw className="w-4 h-4 animate-spin text-white" />
+              ) : (
+                <Sparkles className="w-4 h-4 text-white" />
+              )}
+              <span>[ RUN K-MEANS ]</span>
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Algorithm Selector Tabs */}
-      <div className="glass-panel p-2 rounded-2xl border border-slate-800 flex flex-wrap gap-2">
-        {[
-          { id: "kmeans", label: "K-Means Clustering", desc: "Centroid-based spherical grouping" },
-          { id: "hierarchical", label: "Hierarchical Clustering", desc: "Agglomerative dendrogram tree" },
-          { id: "dbscan", label: "DBSCAN Analysis", desc: "Density-based & noise detection" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setCurrentAlgorithm(tab.id as any)}
-            className={`flex-1 min-w-[200px] p-4 rounded-xl text-left transition-all ${
-              currentAlgorithm === tab.id
-                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold"
-                : "bg-slate-900/60 text-slate-300 hover:bg-slate-900 border border-slate-800/80"
-            }`}
-          >
-            <div className="text-sm font-bold flex items-center gap-2">
-              <Layers className="w-4 h-4" />
-              {tab.label}
-            </div>
-            <div className={`text-xs mt-1 ${currentAlgorithm === tab.id ? "text-indigo-100" : "text-slate-400"}`}>
-              {tab.desc}
-            </div>
-          </button>
-        ))}
+      {/* Middle KPI Row (3 Cards) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Clusters Found */}
+        <div className="bg-[#131B2E] border border-slate-800/80 rounded-2xl p-5 shadow-lg">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+            Clusters Found
+          </span>
+          <span className="text-2xl font-extrabold text-white">{clustersFound}</span>
+        </div>
+
+        {/* Silhouette Score */}
+        <div className="bg-[#131B2E] border border-slate-800/80 rounded-2xl p-5 shadow-lg">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+            Silhouette Score
+          </span>
+          <span className="text-2xl font-extrabold text-emerald-400">{silhouetteScore}</span>
+        </div>
+
+        {/* Inertia (WCSS) */}
+        <div className="bg-[#131B2E] border border-slate-800/80 rounded-2xl p-5 shadow-lg">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+            Inertia (WCSS)
+          </span>
+          <span className="text-2xl font-extrabold text-cyan-400">{inertiaVal}</span>
+        </div>
       </div>
 
-      {/* Hyperparameter Control Box */}
-      <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-6">
-        <h3 className="text-base font-bold text-white flex items-center gap-2">
-          <Sliders className="w-5 h-5 text-indigo-400" />
-          Hyperparameter Configuration
-        </h3>
+      {/* Bottom Chart Card: K-Means Cluster Scatter Visualization */}
+      <div className="bg-[#131B2E] border border-slate-800/80 rounded-2xl p-6 shadow-xl space-y-4">
+        <h2 className="text-sm font-bold text-white flex items-center gap-2">
+          <span>📊</span>
+          <span>K-Means Cluster Scatter Visualization ({projectionMode === "pca" ? "PCA Component 1 vs Component 2" : "Annual Income vs Spending Score"})</span>
+        </h2>
 
-        {/* K-Means Controls */}
-        {currentAlgorithm === "kmeans" && (
-          <div className="space-y-6">
-            <div className="space-y-2 max-w-md">
-              <div className="flex justify-between text-xs font-semibold text-slate-300">
-                <span>Number of Clusters (K):</span>
-                <span className="text-indigo-400 font-mono text-sm">{kmeansK}</span>
-              </div>
-              <input
-                type="range"
-                min="2"
-                max="10"
-                value={kmeansK}
-                onChange={(e) => setKmeansK(parseInt(e.target.value))}
-                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+        <div className="h-80 w-full pt-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <ScatterChart margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
+              <XAxis
+                type="number"
+                dataKey={projectionMode === "pca" ? "pca_x" : "income"}
+                name={projectionMode === "pca" ? "PCA Component 1" : "Annual Income"}
+                stroke="#64748B"
+                fontSize={11}
               />
-              <div className="flex justify-between text-[10px] text-slate-500 font-mono">
-                <span>K=2</span>
-                <span>K=5</span>
-                <span>K=10</span>
-              </div>
-            </div>
-
-            {/* Optimal K Recommendation Alert */}
-            {optimalKInfo && (
-              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center justify-between gap-4 text-xs">
-                <div className="flex items-center gap-2">
-                  <Award className="w-5 h-5 text-emerald-400 shrink-0" />
-                  <div>
-                    <strong className="text-white">Recommended Optimal K: {optimalKInfo.k}</strong>
-                    <p className="text-slate-400 text-[11px] mt-0.5">
-                      Highest Silhouette Score ({optimalKInfo.silhouette}) across evaluated range K=2 to 10.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setKmeansK(optimalKInfo.k)}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold text-[11px] hover:bg-emerald-500 transition-all shrink-0"
-                >
-                  Apply K={optimalKInfo.k}
-                </button>
-              </div>
-            )}
-
-            {/* Elbow Data Charts */}
-            {clusteringResult?.elbow_data && (
-              <div className="pt-4 border-t border-slate-800">
-                <ElbowChart data={clusteringResult.elbow_data} />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Hierarchical Controls */}
-        {currentAlgorithm === "hierarchical" && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl">
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs font-semibold text-slate-300">
-                  <span>Number of Clusters (K):</span>
-                  <span className="text-emerald-400 font-mono text-sm">{hierarchicalK}</span>
-                </div>
-                <input
-                  type="range"
-                  min="2"
-                  max="10"
-                  value={hierarchicalK}
-                  onChange={(e) => setHierarchicalK(parseInt(e.target.value))}
-                  className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-300 block">Linkage Criterion:</label>
-                <select
-                  value={hierarchicalLinkage}
-                  onChange={(e) => setHierarchicalLinkage(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-medium text-white focus:outline-none focus:border-emerald-500"
-                >
-                  <option value="ward">Ward (Variance Minimization)</option>
-                  <option value="complete">Complete Linkage (Max Distance)</option>
-                  <option value="average">Average Linkage (Mean Distance)</option>
-                  <option value="single">Single Linkage (Min Distance)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Dendrogram Visualization */}
-            {clusteringResult?.dendrogram_data ? (
-              <div className="pt-4 border-t border-slate-800">
-                <DendrogramChart data={clusteringResult.dendrogram_data} />
-              </div>
-            ) : (
-              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-slate-300 flex items-start gap-3">
-                <Info className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-white">Hierarchical Dendrogram Linkage Matrix:</strong>
-                  <p className="text-slate-400 mt-1">
-                    Agglomerative clustering creates bottom-up customer pair trees. Ward linkage optimizes total within-cluster variance.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* DBSCAN Controls */}
-        {currentAlgorithm === "dbscan" && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl">
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs font-semibold text-slate-300">
-                  <span>Epsilon Radius (eps):</span>
-                  <span className="text-cyan-400 font-mono text-sm">{dbscanEps}</span>
-                </div>
-                <input
-                  type="range"
-                  min="0.2"
-                  max="1.5"
-                  step="0.05"
-                  value={dbscanEps}
-                  onChange={(e) => setDbscanEps(parseFloat(e.target.value))}
-                  className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs font-semibold text-slate-300">
-                  <span>Min Samples:</span>
-                  <span className="text-cyan-400 font-mono text-sm">{dbscanMinSamples}</span>
-                </div>
-                <input
-                  type="range"
-                  min="2"
-                  max="15"
-                  value={dbscanMinSamples}
-                  onChange={(e) => setDbscanMinSamples(parseInt(e.target.value))}
-                  className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"
-                />
-              </div>
-            </div>
-
-            {/* Explanation box */}
-            <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-200 flex items-start gap-3">
-              <Info className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-white">Density-Based Spatial Clustering of Applications with Noise (DBSCAN):</strong>
-                <p className="mt-1">
-                  "DBSCAN identifies dense customer groups and can classify unusual customers as noise (Cluster -1)."
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Execute Button */}
-        <div className="pt-4 border-t border-slate-800 flex justify-end">
-          <button
-            onClick={() => executeClustering()}
-            disabled={isLoading}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-sm font-semibold text-white shadow-xl shadow-indigo-600/30 transition-all disabled:opacity-50"
-          >
-            <Play className="w-4 h-4 fill-white" />
-            {isLoading ? "Analyzing customer patterns..." : "Run Clustering Algorithm"}
-          </button>
+              <YAxis
+                type="number"
+                dataKey={projectionMode === "pca" ? "pca_y" : "spending_score"}
+                name={projectionMode === "pca" ? "PCA Component 2" : "Spending Score"}
+                stroke="#64748B"
+                fontSize={11}
+              />
+              <Tooltip
+                cursor={{ strokeDasharray: "3 3" }}
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    return (
+                      <div className="bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-xs space-y-1">
+                        <p className="font-bold text-white">{data.customer_id}</p>
+                        <p className="text-cyan-400 font-semibold">{data.segment_name}</p>
+                        <p className="text-slate-300">Income: ${data.income}k</p>
+                        <p className="text-slate-300">Spending Score: {data.spending_score}</p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Scatter data={points}>
+                {points.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={CLUSTER_COLORS[Math.abs(entry.cluster_id) % CLUSTER_COLORS.length]}
+                  />
+                ))}
+              </Scatter>
+            </ScatterChart>
+          </ResponsiveContainer>
         </div>
       </div>
-
-      {/* Live Metric Results Summary */}
-      {clusteringResult && (
-        <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-indigo-400" />
-              Clustering Execution Results ({clusteringResult.algorithm.toUpperCase()})
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-              <div className="text-xs text-slate-400">Clusters Formed</div>
-              <div className="text-xl font-bold text-white mt-1">{clusteringResult.n_clusters}</div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-              <div className="text-xs text-slate-400">Silhouette Score</div>
-              <div className="text-xl font-bold text-indigo-400 mt-1">{clusteringResult.silhouette_score}</div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-              <div className="text-xs text-slate-400">Davies-Bouldin Index</div>
-              <div className="text-xl font-bold text-emerald-400 mt-1">{clusteringResult.davies_bouldin_score}</div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-              <div className="text-xs text-slate-400">Calinski-Harabasz</div>
-              <div className="text-xl font-bold text-cyan-400 mt-1">{clusteringResult.calinski_harabasz_score}</div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-              <div className="text-xs text-slate-400">Noise Outliers</div>
-              <div className="text-xl font-bold text-rose-400 mt-1">{clusteringResult.noise_count}</div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

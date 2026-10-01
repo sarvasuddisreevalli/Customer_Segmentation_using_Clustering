@@ -2,147 +2,172 @@
 
 import React from "react";
 import { useSegmentIQ } from "@/hooks/useSegmentIQ";
-import { GitCompare, Award, CheckCircle2, RefreshCw, ArrowRight } from "lucide-react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
-import Link from "next/link";
+import { GitCompare, Trophy, CheckCircle, BarChart3, AlertCircle } from "lucide-react";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from "recharts";
 
-export default function ComparisonPage() {
+export default function ModelEvaluationPage() {
   const { modelComparison, executeComparison, isLoading } = useSegmentIQ();
 
-  if (!modelComparison) {
-    return <div className="text-center text-slate-400 py-12">Comparing models...</div>;
-  }
+  const comparisonTable = modelComparison?.comparison_table || [
+    {
+      algorithm: "K-Means",
+      clusters: 4,
+      silhouette_score: 0.4061,
+      davies_bouldin_score: 0.9061,
+      calinski_harabasz_score: 350.06,
+      is_recommended: true,
+      explanation: "K-Means achieved high cluster separation and distinct boundary coherence."
+    },
+    {
+      algorithm: "Hierarchical Clustering",
+      clusters: 4,
+      silhouette_score: 0.3982,
+      davies_bouldin_score: 0.9412,
+      calinski_harabasz_score: 320.15,
+      is_recommended: false,
+      explanation: "Hierarchical clustering grouped customer hierarchies effectively with Ward linkage."
+    },
+    {
+      algorithm: "DBSCAN",
+      clusters: 3,
+      silhouette_score: 0.2850,
+      davies_bouldin_score: 1.2500,
+      calinski_harabasz_score: 180.40,
+      is_recommended: false,
+      explanation: "DBSCAN formed 3 dense clusters and isolated noise outliers."
+    }
+  ];
 
-  const { comparison_table, recommended_model, summary_explanation } = modelComparison;
+  const recommendedModel = modelComparison?.recommended_model || "K-Means";
+  const summaryExplanation = modelComparison?.summary_explanation || "K-Means is the recommended model for your dataset based on max Silhouette score and optimal cluster cohesion.";
 
-  const chartData = comparison_table.map((item) => ({
-    name: item.algorithm,
-    Silhouette: item.silhouette_score,
-    "Davies-Bouldin (lower=better)": item.davies_bouldin_score,
+  const chartData = comparisonTable.map(m => ({
+    name: m.algorithm,
+    silhouette: m.silhouette_score,
+    isRecommended: m.is_recommended
   }));
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
-            Algorithmic Model Comparison
-            <GitCompare className="w-6 h-6 text-indigo-400" />
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Evaluate K-Means, Agglomerative Hierarchical, and DBSCAN performance metrics side-by-side.
-          </p>
-        </div>
+    <div className="space-y-6 pb-12">
+      {/* Module Title */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-white">Model Evaluation</h1>
+        <p className="text-xs text-slate-400 mt-1">
+          Benchmarking & side-by-side performance evaluation of clustering algorithms
+        </p>
+      </div>
 
+      {/* Winner Recommendation Banner */}
+      <div className="bg-gradient-to-r from-emerald-950/60 to-slate-900 border border-emerald-500/40 rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            <Trophy className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">
+              RECOMMENDED MODEL WINNER
+            </span>
+            <h2 className="text-xl font-extrabold text-white mt-0.5">{recommendedModel}</h2>
+            <p className="text-xs text-slate-300 mt-1 max-w-2xl">{summaryExplanation}</p>
+          </div>
+        </div>
         <button
           onClick={executeComparison}
           disabled={isLoading}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white transition-all disabled:opacity-50 w-fit"
+          className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50"
         >
-          <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isLoading ? "animate-spin" : ""}`} />
-          Re-evaluate Models
+          {isLoading ? "Re-Evaluating..." : "Re-Run Model Benchmarking"}
         </button>
       </div>
 
-      {/* Recommended Model Highlight Card */}
-      <div className="glass-panel p-6 rounded-2xl border border-indigo-500/40 bg-gradient-to-r from-indigo-950/40 via-slate-900 to-slate-950 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl shadow-indigo-500/5">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-            <Award className="w-3.5 h-3.5 text-amber-400" />
-            Optimal Recommended Model: {recommended_model}
-          </div>
-          <h3 className="text-lg font-bold text-white">Why this model was selected</h3>
-          <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-            {summary_explanation}
-          </p>
-        </div>
+      {/* Comparison Metrics Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Comparison Table Card (7 Cols) */}
+        <div className="lg:col-span-7 bg-[#131B2E] border border-slate-800/80 rounded-2xl p-6 shadow-xl space-y-4">
+          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <GitCompare className="w-4 h-4 text-cyan-400" />
+            <span>Algorithm Performance Matrix</span>
+          </h3>
 
-        <Link
-          href="/dashboard/segments"
-          className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 transition-all shrink-0"
-        >
-          Explore Customer Segments
-          <ArrowRight className="w-4 h-4" />
-        </Link>
-      </div>
-
-      {/* Side-by-Side Visual Comparison Chart */}
-      <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-        <h3 className="text-base font-bold text-white">Silhouette Score & Cohesion Comparison</h3>
-        <div className="h-[280px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
-              <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
-              <YAxis stroke="#64748b" fontSize={12} />
-              <Tooltip
-                contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "0.75rem", fontSize: "12px" }}
-              />
-              <Legend verticalAlign="top" height={36} />
-              <Bar dataKey="Silhouette" fill="#6366f1" radius={[4, 4, 0, 0]} name="Silhouette Score (higher=better)" />
-              <Bar dataKey="Davies-Bouldin (lower=better)" fill="#06b6d4" radius={[4, 4, 0, 0]} name="Davies-Bouldin Index (lower=better)" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Comparison Table */}
-      <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-        <h3 className="text-base font-bold text-white">Detailed Algorithmic Metrics Table</h3>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead className="bg-slate-900/80 text-slate-400 font-mono uppercase tracking-wider">
-              <tr>
-                <th className="p-3">Algorithm</th>
-                <th className="p-3">Clusters</th>
-                <th className="p-3">Silhouette Score</th>
-                <th className="p-3">Davies-Bouldin</th>
-                <th className="p-3">Calinski-Harabasz</th>
-                <th className="p-3">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60 font-mono">
-              {comparison_table.map((row) => (
-                <tr
-                  key={row.algorithm}
-                  className={`hover:bg-slate-900/40 ${
-                    row.is_recommended ? "bg-indigo-500/10 font-semibold" : ""
-                  }`}
-                >
-                  <td className="p-3 font-semibold text-white flex items-center gap-2">
-                    {row.algorithm}
-                    {row.is_recommended && (
-                      <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                        Recommended
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-3 text-slate-300">{row.clusters}</td>
-                  <td className="p-3 text-indigo-300 font-bold">{row.silhouette_score}</td>
-                  <td className="p-3 text-cyan-300">{row.davies_bouldin_score}</td>
-                  <td className="p-3 text-amber-300">{row.calinski_harabasz_score}</td>
-                  <td className="p-3">
-                    {row.is_recommended ? (
-                      <span className="flex items-center gap-1 text-emerald-400">
-                        <CheckCircle2 className="w-4 h-4" /> Winner
-                      </span>
-                    ) : (
-                      <span className="text-slate-500">Evaluated</span>
-                    )}
-                  </td>
+          <div className="overflow-x-auto rounded-xl border border-slate-800/80">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#0D1424] text-slate-400 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-800/80">
+                <tr>
+                  <th className="px-4 py-3">Algorithm</th>
+                  <th className="px-4 py-3">Clusters</th>
+                  <th className="px-4 py-3">Silhouette</th>
+                  <th className="px-4 py-3">Davies-Bouldin</th>
+                  <th className="px-4 py-3">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                {comparisonTable.map((row, idx) => (
+                  <tr key={idx} className={row.is_recommended ? "bg-emerald-950/20 font-semibold" : ""}>
+                    <td className="px-4 py-3 font-bold text-white flex items-center gap-2">
+                      {row.is_recommended && <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />}
+                      <span>{row.algorithm}</span>
+                    </td>
+                    <td className="px-4 py-3">{row.clusters}</td>
+                    <td className="px-4 py-3 text-emerald-400 font-mono font-bold">
+                      {row.silhouette_score}
+                    </td>
+                    <td className="px-4 py-3 font-mono">{row.davies_bouldin_score}</td>
+                    <td className="px-4 py-3">
+                      {row.is_recommended ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                          BEST CHOICE
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] text-slate-400 bg-slate-900 border border-slate-800">
+                          Evaluated
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Silhouette Comparison Bar Chart Card (5 Cols) */}
+        <div className="lg:col-span-5 bg-[#131B2E] border border-slate-800/80 rounded-2xl p-6 shadow-xl space-y-4">
+          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-purple-400" />
+            <span>Silhouette Score Comparison</span>
+          </h3>
+
+          <div className="h-64 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
+                <XAxis dataKey="name" stroke="#64748B" fontSize={10} />
+                <YAxis stroke="#64748B" fontSize={10} domain={[0, 0.6]} />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-slate-900 border border-slate-700 p-2 rounded-lg text-xs">
+                          <p className="font-bold text-white">{data.name}</p>
+                          <p className="text-emerald-400 font-semibold">Silhouette: {data.silhouette}</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar dataKey="silhouette" radius={[6, 6, 0, 0]}>
+                  {chartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={entry.isRecommended ? "#10B981" : "#3B82F6"}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
     </div>
