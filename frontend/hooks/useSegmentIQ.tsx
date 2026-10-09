@@ -6,11 +6,13 @@ import {
   ClusteringResult,
   ModelComparisonResponse,
   InsightsResponse,
+  PreprocessResponse,
 } from "@/types";
 import {
   getEDAAnalysis,
   loadDemoDataset,
   uploadCSV,
+  preprocessDataset,
   runKMeans,
   runHierarchical,
   runDBSCAN,
@@ -21,6 +23,7 @@ import {
 interface SegmentIQContextType {
   activeDatasetName: string;
   edaData: EDAOverviewResponse | null;
+  preprocessResult: PreprocessResponse | null;
   currentAlgorithm: "kmeans" | "hierarchical" | "dbscan";
   setCurrentAlgorithm: (algo: "kmeans" | "hierarchical" | "dbscan") => void;
   kmeansK: number;
@@ -42,6 +45,13 @@ interface SegmentIQContextType {
   setError: (err: string | null) => void;
   loadDemo: () => Promise<void>;
   uploadFile: (file: File) => Promise<void>;
+  applyPreprocessing: (
+    fillMissing: boolean,
+    dropDuplicates: boolean,
+    scaleType: string,
+    selectedFeatures: string[],
+    missingStrategy?: string
+  ) => Promise<PreprocessResponse>;
   executeClustering: (algo?: "kmeans" | "hierarchical" | "dbscan") => Promise<void>;
   executeComparison: () => Promise<void>;
   executeInsights: () => Promise<void>;
@@ -140,6 +150,55 @@ export const SegmentIQProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const [preprocessResult, setPreprocessResult] = useState<PreprocessResponse | null>(null);
+
+  const applyPreprocessing = async (
+    fillMissing: boolean,
+    dropDuplicates: boolean,
+    scaleType: string,
+    selectedFeatures: string[],
+    missingStrategy: string = "median"
+  ) => {
+    setIsLoading(true);
+    setLoadingStep("Applying preprocessing pipeline...");
+    setError(null);
+    try {
+      const res = await preprocessDataset({
+        fill_missing: fillMissing,
+        missing_strategy: missingStrategy,
+        drop_duplicates: dropDuplicates,
+        scale_type: scaleType,
+        selected_features: selectedFeatures,
+      });
+
+      setPreprocessResult(res);
+
+      setLoadingStep("Updating EDA statistics...");
+      const eda = await getEDAAnalysis();
+      setEdaData(eda);
+
+      setLoadingStep("Re-running K-Means clustering...");
+      const clu = await runKMeans(kmeansK);
+      setClusteringResult(clu);
+
+      setLoadingStep("Updating model evaluation...");
+      const comp = await compareModels();
+      setModelComparison(comp);
+
+      const ins = await getInsights(clu);
+      setInsights(ins);
+
+      return res;
+    } catch (err: any) {
+      console.error("Preprocessing apply error:", err);
+      setError(err.message || "Failed to apply preprocessing parameters.");
+      throw err;
+    } finally {
+      setIsLoading(false);
+      setLoadingStep("");
+    }
+  };
+
   const executeClustering = async (algoTarget?: "kmeans" | "hierarchical" | "dbscan") => {
     const target = algoTarget || currentAlgorithm;
     setIsLoading(true);
@@ -206,6 +265,7 @@ export const SegmentIQProvider = ({ children }: { children: ReactNode }) => {
       value={{
         activeDatasetName,
         edaData,
+        preprocessResult,
         currentAlgorithm,
         setCurrentAlgorithm,
         kmeansK,
@@ -227,6 +287,7 @@ export const SegmentIQProvider = ({ children }: { children: ReactNode }) => {
         setError,
         loadDemo,
         uploadFile,
+        applyPreprocessing,
         executeClustering,
         executeComparison,
         executeInsights,

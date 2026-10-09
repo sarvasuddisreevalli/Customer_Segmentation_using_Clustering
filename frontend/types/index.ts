@@ -135,3 +135,22 @@ export interface InsightsResponse {
   lowest_engagement_segment: SegmentProfile;
   all_profiles: SegmentProfile[];
 }
+
+export interface PreprocessStageInfo {
+  stage_id: string;
+  title: string;
+  status: "completed" | "active" | "skipped";
+  summary: string;
+  details: Record<string, any>;
+}
+
+export interface PreprocessResponse {
+  message: string;
+  raw_info: Record<string, any>;
+  clean_info: Record<string, any>;
+  selected_features: string[];
+  pipeline_flow: PreprocessStageInfo[];
+  raw_sample: Record<string, any>[];
+  clean_sample: Record<string, any>[];
+}
+

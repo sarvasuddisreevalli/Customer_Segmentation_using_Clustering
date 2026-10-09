@@ -3,6 +3,7 @@ import {
   ClusteringResult,
   ModelComparisonResponse,
   InsightsResponse,
+  PreprocessResponse,
 } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -19,8 +20,8 @@ async function fetchJSON<T>(endpoint: string, options?: RequestInit): Promise<T>
     });
 
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(errorData.detail || `API request failed with status ${res.status}`);
+      const errorData = await res.json().catch(() => ({ detail: res.statusText, error: res.statusText }));
+      throw new Error(errorData.error || errorData.detail || `API request failed with status ${res.status}`);
     }
 
     return (await res.json()) as T;
@@ -41,11 +42,24 @@ export async function uploadCSV(file: File) {
   });
 
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(errorData.detail || "Failed to upload CSV file.");
+    const errorData = await res.json().catch(() => ({ detail: res.statusText, error: res.statusText }));
+    throw new Error(errorData.error || errorData.detail || "Failed to upload CSV file.");
   }
 
   return await res.json();
+}
+
+export async function preprocessDataset(params: {
+  fill_missing?: boolean;
+  missing_strategy?: string;
+  drop_duplicates?: boolean;
+  scale_type?: string;
+  selected_features?: string[];
+}): Promise<PreprocessResponse> {
+  return await fetchJSON<PreprocessResponse>("/preprocess", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
 }
 
 export async function loadDemoDataset() {
