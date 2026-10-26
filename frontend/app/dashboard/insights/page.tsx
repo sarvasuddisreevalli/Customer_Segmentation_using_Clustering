@@ -69,7 +69,7 @@ export default function InsightsPage() {
           <h4 className="text-lg font-bold text-white">{highest_value_segment.segment_name}</h4>
           <p className="text-xs text-slate-400">{highest_value_segment.description}</p>
           <div className="pt-2 border-t border-slate-800 text-xs text-slate-300 font-semibold">
-            Strategy: <span className="text-emerald-400">{highest_value_segment.marketing_recommendation.strategy}</span>
+            Strategy: <span className="text-emerald-400">{highest_value_segment.marketing_recommendation?.strategy || "Targeted premium loyalty engagement"}</span>
           </div>
         </div>
 
@@ -84,7 +84,7 @@ export default function InsightsPage() {
             {largest_segment.customer_count} customers ({largest_segment.percentage}% of overall audience).
           </p>
           <div className="pt-2 border-t border-slate-800 text-xs text-slate-300 font-semibold">
-            Strategy: <span className="text-indigo-400">{largest_segment.marketing_recommendation.strategy}</span>
+            Strategy: <span className="text-indigo-400">{largest_segment.marketing_recommendation?.strategy || "Broad-scale brand awareness & standard offers"}</span>
           </div>
         </div>
 
@@ -97,7 +97,7 @@ export default function InsightsPage() {
           <h4 className="text-lg font-bold text-white">{lowest_engagement_segment.segment_name}</h4>
           <p className="text-xs text-slate-400">{lowest_engagement_segment.description}</p>
           <div className="pt-2 border-t border-slate-800 text-xs text-slate-300 font-semibold">
-            Strategy: <span className="text-rose-400">{lowest_engagement_segment.marketing_recommendation.strategy}</span>
+            Strategy: <span className="text-rose-400">{lowest_engagement_segment.marketing_recommendation?.strategy || "Win-back surveys & low-friction re-engagement"}</span>
           </div>
         </div>
       </div>
@@ -112,7 +112,11 @@ export default function InsightsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {all_profiles.map((profile) => {
             const color = getClusterColor(profile.cluster_id);
-            const rec = profile.marketing_recommendation;
+            const rec = profile.marketing_recommendation || {
+              strategy: "Targeted strategy",
+              campaign: "Personalized communication",
+              business_goal: "Engagement & Retention",
+            };
 
             return (
               <div

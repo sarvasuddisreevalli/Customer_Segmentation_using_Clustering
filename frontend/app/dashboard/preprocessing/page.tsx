@@ -29,7 +29,7 @@ import {
 export default function PreprocessingModulePage() {
   const { edaData, preprocessResult, applyPreprocessing, isLoading } = useSegmentIQ();
 
-  const availableFeatures = edaData?.quality?.numeric_columns || edaData?.clean_info?.numeric_columns || [
+  const availableFeatures: string[] = edaData?.quality?.numeric_columns || (edaData as any)?.clean_info?.numeric_columns || [
     "Age",
     "Annual Income",
     "Spending Score"
@@ -99,7 +99,7 @@ export default function PreprocessingModulePage() {
   const totalMissing = preprocessResult?.raw_info?.missing_values ?? edaData?.quality?.missing_values ?? 0;
   const duplicateCount = preprocessResult?.raw_info?.duplicate_rows ?? edaData?.quality?.duplicate_rows ?? 0;
 
-  const cleanRows = preprocessResult?.clean_info?.total_rows || edaData?.clean_info?.total_rows || rawRows;
+  const cleanRows = preprocessResult?.clean_info?.total_rows || (edaData as any)?.clean_info?.total_rows || rawRows;
   const cleanCols = preprocessResult?.clean_info?.numeric_columns?.length || selectedFeatures.length || 3;
 
   const rawRecords = preprocessResult?.raw_sample || edaData?.sample_records || [];
@@ -362,7 +362,7 @@ export default function PreprocessingModulePage() {
                 </span>
               </div>
               <div className="space-y-2 text-xs max-h-48 overflow-y-auto pr-1">
-                {availableFeatures.map((feat) => {
+                {availableFeatures.map((feat: string) => {
                   const isChecked = selectedFeatures.includes(feat);
                   return (
                     <label
@@ -644,7 +644,7 @@ export default function PreprocessingModulePage() {
               <tr>
                 <th className="px-4 py-3">INDEX</th>
                 <th className="px-4 py-3">CUSTOMER ID</th>
-                {(activeTab === "cleaned" ? selectedFeatures : availableFeatures).map((col) => (
+                {(activeTab === "cleaned" ? selectedFeatures : availableFeatures).map((col: string) => (
                   <th key={col} className="px-4 py-3">
                     {col.toUpperCase()}
                   </th>
@@ -672,7 +672,7 @@ export default function PreprocessingModulePage() {
                     <tr key={idx} className="hover:bg-slate-900/40 transition-colors">
                       <td className="px-4 py-2.5 font-mono text-slate-500 text-[11px]">{idx + 1}</td>
                       <td className="px-4 py-2.5 font-mono text-cyan-400 font-semibold">{String(custId)}</td>
-                      {displayCols.map((col) => {
+                      {displayCols.map((col: string) => {
                         // Find key matching col or fuzzy col name
                         const colKey = Object.keys(row).find(
                           (k) => k.toLowerCase() === col.toLowerCase() || k.toLowerCase().includes(col.toLowerCase())

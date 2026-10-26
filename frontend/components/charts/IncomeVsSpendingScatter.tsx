@@ -44,7 +44,7 @@ export const IncomeVsSpendingScatter: React.FC<ScatterProps> = ({ points, cluste
   }, [points, selectedCluster, selectedGender, maxIncomeFilter, maxAgeFilter]);
 
   const uniqueClusters = Array.from(new Set(points.map((p) => p.cluster_id))).sort((a, b) => a - b);
-  const availableGenders = Array.from(new Set(points.map((p) => p.gender).filter((g) => g && g !== "N/A")));
+  const availableGenders = Array.from(new Set(points.map((p) => p.gender).filter((g): g is string => !!g && g !== "N/A")));
 
   return (
     <div className="w-full flex flex-col gap-4">

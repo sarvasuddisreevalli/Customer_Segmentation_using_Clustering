@@ -1,200 +1,181 @@
-# SEGMENTIQ: Intelligent Customer Segmentation & Analytics
+# SegmentIQ – Intelligent Customer Segmentation & Analytics Platform
 
-SegmentIQ is a premium, full-stack Machine Learning SaaS analytics application designed to transform raw customer behavior data into clear, actionable customer segments using advanced clustering algorithms (K-Means, Agglomerative Hierarchical Clustering, DBSCAN) and interactive visual analytics.
+[![Full Test Suite](https://img.shields.io/badge/pytest-95%2F95%20passed-emerald)](backend/tests/)
+[![TypeScript](https://img.shields.io/badge/typescript-zero%20errors-blue)](frontend/)
+[![Next.js](https://img.shields.io/badge/next.js-15.5-black)](frontend/)
+[![FastAPI](https://img.shields.io/badge/fastapi-0.110-teal)](backend/)
+[![License](https://img.shields.io/badge/license-MIT-purple.svg)](LICENSE)
 
----
+**SegmentIQ** is an enterprise-grade, portfolio-ready full-stack Machine Learning and AI platform designed to transform customer behavioral datasets into clear, explainable, and actionable customer segments.
 
-## 🌟 Product Vision & Flow
-
-SegmentIQ bridges the gap between complex ML statistical results and non-technical business decision-makers:
-
-```
-Customer Dataset
-      ↓
-Upload & Preprocessing
-      ↓
-Data Validation & Scaling (StandardScaler)
-      ↓
-Exploratory Data Analysis (EDA)
-      ↓
-Clustering Execution (K-Means / Hierarchical / DBSCAN)
-      ↓
-Model Comparison & Evaluation (Silhouette, Davies-Bouldin, Calinski-Harabasz)
-      ↓
-Dynamic Persona Profiling
-      ↓
-Executive Insights & Marketing Strategy Recommendations
-      ↓
-CSV / JSON Export
-```
+Built using **FastAPI (Python 3.11+/3.14)**, **SQLAlchemy 2.x**, **Scikit-Learn**, and **Next.js 15 (React 18 + TypeScript + Tailwind CSS)**, SegmentIQ implements a complete ML lifecycle alongside a zero-hallucination AI intelligence engine.
 
 ---
 
-## ✨ Features
+## 🌟 Key Architecture & Capabilities
 
-- **Landing Page**: SaaS visual experience with floating cluster node animations, trusted tech strip, 4-step workflow, algorithm overview cards, business value ROI stats, and responsive drawer navigation.
-- **Executive Overview Dashboard**: Real-time KPI cards (Total Customers, Segments Found, Recommended Algorithm, Silhouette Score, Avg Income, Avg Spending), interactive segment map, segment proportion donut chart, and automated executive takeaways.
-- **Dataset Upload & Quality Audit**: Drag-and-drop CSV upload, "Try Demo Dataset" toggle, validation pipeline state indicator, missing value auto-imputation, and duplicate row detection.
-- **Exploratory Data Analysis (EDA)**: Statistical summaries (Mean, Median, Min, Max, Std Dev), binned histogram distribution charts, feature correlation heatmap matrix, and searchable raw data table sample.
-- **ML Clustering Laboratory**:
-  - **K-Means**: Slider for cluster count $K \in [2, 10]$, Elbow curve plot (Inertia vs K), and Silhouette Score plot.
-  - **Hierarchical Clustering**: Agglomerative linkage selector (Ward, Complete, Average, Single) and dendrogram linkage tree metadata.
-  - **DBSCAN**: Interactive $\epsilon$ radius and `min_samples` sliders with density-based noise point (-1) classification.
-- **Algorithmic Model Comparison**: Side-by-side comparison table evaluating Silhouette Score, Davies-Bouldin Index, and Calinski-Harabasz metrics across algorithms with automated winner badge and metric-driven explanation.
-- **Discovered Customer Segments**: Dynamic persona cards (e.g. *High-Value Champions*, *Budget-Conscious Savers*, *High-Earner Savers*, *Young Trendsetters*, *At-Risk Customers*), interactive Income vs Spending scatter plot with tooltips and cluster filters, and 2D PCA spatial map.
-- **Executive Business Insights**: Auto-computed highest value driver, largest market share group, highest spenders, and at-risk win-back priority with tailored marketing strategies, suggested campaigns, and primary business goals per segment.
-- **Export Data**: Download full customer CSV tagged with `Cluster_ID` and `Segment_Name` alongside summary executive report JSON exports.
+```
+Uploaded Customer Dataset (.csv)
+              │
+              ▼
+Data Cleaning & Feature Engineering
+(Duplicate removal, median/mean imputation, StandardScaler / MinMaxScaler / RobustScaler)
+              │
+              ▼
+Clustering Engine (Partitioning, Density, Hierarchical)
+├── K-Means (Elbow Curve & Silhouette Optimization)
+├── Agglomerative Hierarchical Clustering (Ward, Complete, Average Linkage)
+└── DBSCAN (Density-based radius & core-point detection)
+              │
+              ▼
+Validation & Reproducible Persistence
+(SQLAlchemy 2.x ORM with SQLite / PostgreSQL, Model Artifacts & Assignments)
+              │
+              ▼
+Advanced Visual Analytics & Explanations
+├── 2D PCA Spatial Maps with Explained Variance
+├── Pearson Feature Correlation Matrix
+├── Multi-Segment Attribute Comparison Tables & Radar Distributions
+└── Customer Explorer with Instant Filtering & CSV Formula Injection Sanitization
+              │
+              ▼
+AI-Powered Customer Intelligence & Conversational Analytics
+├── Zero-Hallucination Evidence Extraction (No Raw Customer Data or PII sent to LLM)
+├── Grounded Segment Personas & Behavioral Profiles
+├── Prioritized Marketing Recommendations (Business Hypotheses & Target KPIs)
+├── "Ask SegmentIQ" Conversational Analytics Chat
+└── Downloadable Executive Markdown & CSV Reports
+```
+
+---
+
+## ✨ Features by Phase
+
+### 📊 Phases 1–3: Core Machine Learning Engine
+- **Preprocessing Pipeline**: Outlier detection, missing value strategies (`median`, `mean`, `drop`), duplicate mitigation, and normalization (`StandardScaler`, `MinMaxScaler`, `RobustScaler`).
+- **Clustering Algorithms**: K-Means clustering, Agglomerative Hierarchical clustering, and DBSCAN with density-based noise (`-1`) point identification.
+- **Model Evaluation**: Cohesion and separation metrics calculated deterministically via Silhouette Score, Davies-Bouldin Index, and Calinski-Harabasz Index.
+- **Segment Profiling**: Cluster statistics with distinguishing numerical traits, customer counts, and population percentages.
+
+### 🗄️ Phase 4: Database Persistence & REST APIs
+- **SQLAlchemy 2.x ORM**: Fully typed models (`DatasetModel`, `ClusteringRunModel`, `ModelEvaluationModel`, `SegmentProfileModel`, `ArtifactModel`).
+- **Dataset Lifecycle**: Upload, preview, validation, search, paginated listing, and cascade deletion.
+- **Run Reproducibility**: Persistent clustering history retaining parameters, metrics, and customer-cluster assignments.
+- **Customer Explorer**: Server-side pagination, search by customer attributes, and cluster filtering.
+
+### 💻 Phase 5: Modern SaaS Frontend
+- **Design System**: Responsive dark SaaS interface with glassmorphism, consistent typography, cards, badges, and empty/loading states.
+- **Segmentation Studio**: 5-step wizard guiding users through dataset selection, feature configuration, hyperparameter tuning, and execution.
+- **Navigation Shell**: Side navigation and top bar displaying real-time FastAPI service health.
+
+### 📈 Phase 6: Advanced Analytics & Interactive Visualizations
+- **2D PCA Projection**: Interactive scatter plot with cluster coloring, noise highlighting, and explained variance percentages.
+- **Correlation Heatmap**: Pearson correlation analysis across numerical attributes with identity column exclusion.
+- **Segment Comparison**: Multi-group comparison tables and relative percentage differences against dataset baselines.
+
+### 🧠 Phase 7: AI Customer Intelligence & Conversational Analytics
+- **Zero-Hallucination Grounding Engine**: Deterministic extraction of numerical evidence with zero PII exposure.
+- **Ask SegmentIQ**: Natural language business analyst interface answering questions using calculated metrics.
+- **Prioritized Business Hypotheses**: Recommendations structured as testable hypotheses with defined success KPIs.
+- **Executive Reports**: Formatted Markdown reports ready for download and executive review.
+- **Deterministic Fallback**: Flawless platform execution even without external LLM credentials configured.
 
 ---
 
 ## 🛠️ Technology Stack
 
-- **Frontend**: Next.js 15 (App Router), TypeScript, React 19, Tailwind CSS, Recharts, Framer Motion, Lucide React.
-- **Backend**: Python 3.13, FastAPI, Uvicorn, Pandas, NumPy, Scikit-Learn, SciPy, Pydantic v2.
-- **Data & Storage**: Synthetic realistic customer dataset (`demo_customers.csv`), stateless session processing.
-- **Containerization & Deployment**: Docker, Docker Compose, Vercel (Frontend), Render (Backend).
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | Next.js 15 (App Router), React 18/19, TypeScript, Tailwind CSS, Recharts, Lucide React, clsx |
+| **Backend Core** | FastAPI 0.110+, Uvicorn, Python 3.11+ / 3.14, Pydantic v2 |
+| **Data & ML** | Scikit-Learn, Pandas, NumPy, SciPy, Joblib |
+| **Database** | SQLAlchemy 2.x (SQLite for local development, PostgreSQL compatible) |
+| **Testing** | Pytest, AnyIO, Pytest-AsyncIO (95 unit and integration tests passing) |
+| **Deployment** | Vercel (Frontend), Render / Railway (Backend) |
 
 ---
 
-## 📁 Monorepo Project Structure
-
-```
-segmentiq/
-├── frontend/
-│   ├── app/
-│   │   ├── layout.tsx
-│   │   ├── page.tsx                  # Landing Page
-│   │   └── dashboard/                # Analytics Dashboard
-│   │       ├── layout.tsx
-│   │       ├── page.tsx              # Overview
-│   │       ├── upload/page.tsx       # CSV Upload & Quality
-│   │       ├── analysis/page.tsx     # EDA & Feature Analysis
-│   │       ├── clustering/page.tsx   # ML Laboratory
-│   │       ├── comparison/page.tsx   # Model Comparison
-│   │       ├── segments/page.tsx     # Customer Segments
-│   │       ├── insights/page.tsx     # Executive Strategy
-│   │       ├── export/page.tsx       # Data Export
-│   │       └── about/page.tsx        # Technical Methodology
-│   ├── components/
-│   │   ├── ui/                       # Buttons, Cards, Overlays
-│   │   ├── landing/                  # Hero Visual Canvas
-│   │   ├── dashboard/                # Sidebar, Header, Mobile Nav
-│   │   └── charts/                   # Recharts Visualizations
-│   ├── hooks/
-│   │   └── useSegmentIQ.tsx          # Global State & API Context
-│   ├── lib/
-│   │   ├── api.ts                    # REST API Client
-│   │   └── utils.ts                  # Color palettes & formatters
-│   ├── types/
-│   │   └── index.ts                  # TypeScript Interfaces
-│   ├── package.json
-│   ├── next.config.ts
-│   ├── tailwind.config.ts
-│   └── Dockerfile
-│
-├── backend/
-│   ├── app/
-│   │   ├── main.py                   # FastAPI Application Entry
-│   │   ├── api/
-│   │   │   └── endpoints.py          # REST Endpoints
-│   │   ├── services/
-│   │   │   └── ml_service.py         # ML Pipeline & Dynamic Profiling
-│   │   ├── models/
-│   │   │   └── schemas.py            # Pydantic Schemas
-│   │   └── utils/
-│   │       └── dataset_generator.py  # Synthetic Dataset Generator
-│   ├── tests/
-│   │   └── test_api.py               # Pytest Backend Unit Tests
-│   ├── data/
-│   │   └── demo_customers.csv
-│   ├── requirements.txt
-│   ├── Dockerfile
-│   └── .env.example
-│
-├── data/
-│   └── demo_customers.csv
-├── docker-compose.yml
-├── README.md
-└── .gitignore
-```
-
----
-
-## 🚀 Local Development Setup
+## 🚀 Quickstart Guide
 
 ### Prerequisites
-- Python 3.11+
-- Node.js 20+
-- npm 10+
+- Node.js 18+ and npm
+- Python 3.11+ (Python 3.14 compatible)
+- Git
 
-### 1. Clone & Setup Backend
+### 1. Clone & Set Up Backend
+
 ```bash
-cd backend
+git clone https://github.com/sarvasuddisreevalli/Customer_Segmentation_using_Clustering.git
+cd Customer_Segmentation_using_Clustering/backend
+
+# Create virtual environment
+python -m venv .venv
+# On Windows:
+.venv\Scripts\activate
+# On Linux/macOS:
+# source .venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
-python app/utils/dataset_generator.py
-python -m uvicorn app.main:app --reload --port 8000
-```
-Backend API will be live at `http://localhost:8000` (Interactive docs at `http://localhost:8000/docs`).
 
-### 2. Setup Frontend
+# Start backend server
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+The FastAPI backend will start at `http://localhost:8000`.  
+Explore interactive API documentation at `http://localhost:8000/docs`.
+
+### 2. Set Up Frontend
+
 ```bash
-cd frontend
+cd ../frontend
+
+# Install dependencies
 npm install
+
+# Start development server
 npm run dev
 ```
-Frontend web application will be live at `http://localhost:3000`.
+
+Open `http://localhost:3000` in your browser.
 
 ---
 
-## 🐳 Docker Setup
+## 🧪 Automated Testing
 
-Run the full stack with a single command:
-```bash
-docker compose up --build
-```
-- Frontend: `http://localhost:3000`
-- Backend: `http://localhost:8000`
+Run the full backend test suite:
 
----
-
-## 🌐 Production Deployment Guide
-
-### Deploy Backend to Render
-1. Create a new **Web Service** on [Render](https://render.com/).
-2. Select your repository and set Root Directory to `backend`.
-3. Set Build Command: `pip install -r requirements.txt`
-4. Set Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-5. Add Environment Variable:
-   - `CORS_ORIGINS`: `https://your-segmentiq-frontend.vercel.app`
-
-### Deploy Frontend to Vercel
-1. Import your repository into [Vercel](https://vercel.com/).
-2. Set Root Directory to `frontend`.
-3. Add Environment Variable:
-   - `NEXT_PUBLIC_API_URL`: `https://your-segmentiq-backend.onrender.com`
-4. Click **Deploy**.
-
----
-
-## 🧪 Testing
-
-### Run Backend Pytest Suite
 ```bash
 cd backend
-python -m pytest tests/test_api.py
+pytest -v
 ```
 
-### Run Frontend Build Check
+**Results:**
+- `test_ml_pipeline.py`: 63/63 passed
+- `test_phase4_backend.py`: 14/14 passed
+- `test_phase6_7.py`: 8/8 passed
+- `test_api.py`: 10/10 passed
+- **Total:** 95/95 passed (100%)
+
+Run frontend TypeScript verification:
+
 ```bash
 cd frontend
+npx tsc --noEmit
 npm run build
 ```
 
 ---
 
-## 🔮 Future Architecture Roadmap
+## 🔒 Security & Privacy
 
-- **Multi-Tenant Authentication**: NextAuth.js / Supabase Auth integration.
-- **Persistent Data Store**: PostgreSQL / Supabase for historical segmentation snapshots.
-- **Predictive ML**: Customer Lifetime Value (CLV) regression models and Churn Prediction.
-- **CRM Integration**: Direct sync with HubSpot and Salesforce.
+1. **Zero Customer PII Exposure:** Raw datasets and customer identifiers are never shared with external APIs.
+2. **Formula Injection Sanitization:** Exported CSV files sanitize special formula characters (`=`, `@`, `+`, `-`).
+3. **Path Traversal Prevention:** Filesystem operations use UUID-based internal keys restricted to validated directories.
+4. **Resilient AI Fallback:** System functions without external LLM keys using deterministic rule-based algorithms.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

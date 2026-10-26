@@ -4,14 +4,23 @@ import pandas as pd
 import io
 import os
 from typing import Dict, Any, Optional, List
+from pydantic import BaseModel
 from app.models.schemas import (
     EDAOverviewResponse, KMeansParams, HierarchicalParams, DBSCANParams,
     ClusteringResult, ModelComparisonResponse, InsightsResponse
 )
 from app.services.ml_service import (
     validate_and_clean_data, get_eda_overview, process_clustering,
-    compare_clustering_models, generate_insights_and_profiles
+    compare_clustering_models, generate_insights_and_profiles,
+    get_numeric_features
 )
+
+class PreprocessParams(BaseModel):
+    fill_missing: Optional[bool] = True
+    missing_strategy: Optional[str] = "median"
+    drop_duplicates: Optional[bool] = True
+    scale_type: Optional[str] = "standard"
+    selected_features: Optional[List[str]] = None
 
 router = APIRouter()
 
@@ -103,6 +112,130 @@ def get_analysis():
     df = get_active_dataframe()
     eda_data = get_eda_overview(df)
     return eda_data
+
+@router.post("/preprocess")
+def preprocess_dataset(params: PreprocessParams = Body(...)):
+    """Apply preprocessing steps: imputation, duplicate removal, feature selection, and scaling."""
+    df = get_active_dataframe().copy()
+    raw_df = df.copy()
+    
+    try:
+        from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
+        import numpy as np
+
+        df_clean, raw_quality = validate_and_clean_data(df)
+        raw_sample = raw_df.head(5).fillna("").to_dict(orient="records")
+        
+        pipeline_flow = []
+        
+        # Stage 1: Ingestion
+        pipeline_flow.append({
+            "stage_id": "ingestion",
+            "title": "Data Ingestion",
+            "status": "completed",
+            "summary": f"Loaded {raw_quality['total_rows']} rows × {raw_quality['total_columns']} columns",
+            "details": {"rows": raw_quality["total_rows"], "columns": raw_quality["total_columns"]}
+        })
+        
+        # Stage 2: Missing values
+        missing_before = int(raw_df.isnull().sum().sum())
+        fill_strategy = params.missing_strategy or "median"
+        numeric_cols = get_numeric_features(df_clean)
+        
+        if params.fill_missing and missing_before > 0:
+            for col in numeric_cols:
+                if fill_strategy == "mean":
+                    df_clean[col] = df_clean[col].fillna(df_clean[col].mean())
+                elif fill_strategy == "remove":
+                    df_clean = df_clean.dropna(subset=numeric_cols)
+                else:
+                    df_clean[col] = df_clean[col].fillna(df_clean[col].median())
+                    
+        pipeline_flow.append({
+            "stage_id": "missing",
+            "title": "Missing Value Treatment",
+            "status": "completed" if params.fill_missing else "skipped",
+            "summary": f"Imputed {missing_before} missing values using '{fill_strategy}' strategy" if params.fill_missing and missing_before > 0 else f"No missing values detected ({missing_before})",
+            "details": {"missing_before": missing_before, "strategy": fill_strategy}
+        })
+        
+        # Stage 3: Duplicates
+        dup_count = int(df_clean.duplicated().sum())
+        if params.drop_duplicates and dup_count > 0:
+            df_clean = df_clean.drop_duplicates()
+            
+        pipeline_flow.append({
+            "stage_id": "duplicates",
+            "title": "Duplicate Removal",
+            "status": "completed" if params.drop_duplicates else "skipped",
+            "summary": f"Removed {dup_count} duplicate rows" if params.drop_duplicates and dup_count > 0 else f"No duplicates found ({dup_count})",
+            "details": {"duplicates_removed": dup_count if params.drop_duplicates else 0}
+        })
+        
+        # Stage 4: Feature selection
+        selected = params.selected_features if params.selected_features else numeric_cols
+        selected = [f for f in selected if f in df_clean.columns]
+        if len(selected) < 2:
+            selected = numeric_cols[:max(2, len(numeric_cols))]
+            
+        pipeline_flow.append({
+            "stage_id": "feature_selection",
+            "title": "Feature Selection",
+            "status": "completed",
+            "summary": f"Selected {len(selected)} features: {', '.join(selected)}",
+            "details": {"selected_features": selected, "available_features": numeric_cols}
+        })
+        
+        # Stage 5: Scaling
+        scale_type = params.scale_type or "standard"
+        if scale_type == "minmax":
+            scaler = MinMaxScaler()
+            scaler_name = "Min-Max Scaler [0,1]"
+        elif scale_type == "robust":
+            scaler = RobustScaler()
+            scaler_name = "Robust Scaler (IQR-based)"
+        else:
+            scaler = StandardScaler()
+            scaler_name = "Standard Scaler (Z-score)"
+            
+        X_scaled = scaler.fit_transform(df_clean[selected].values)
+        df_scaled = df_clean.copy()
+        for i, col in enumerate(selected):
+            df_scaled[col] = X_scaled[:, i]
+            
+        CURRENT_DATASET["df"] = df_scaled
+        
+        pipeline_flow.append({
+            "stage_id": "scaling",
+            "title": "Feature Scaling",
+            "status": "completed",
+            "summary": f"Applied {scaler_name} to {len(selected)} features",
+            "details": {"scaler": scale_type, "features_scaled": selected}
+        })
+        
+        # Build clean quality info
+        clean_quality = {
+            "total_rows": len(df_clean),
+            "total_columns": len(df_clean.columns),
+            "missing_values": int(df_clean.isnull().sum().sum()),
+            "duplicate_rows": int(df_clean.duplicated().sum()),
+            "numeric_columns": selected,
+            "categorical_columns": raw_quality.get("categorical_columns", [])
+        }
+        
+        clean_sample = df_scaled[selected].head(5).round(4).to_dict(orient="records")
+        
+        return {
+            "message": "Preprocessing pipeline applied successfully.",
+            "raw_info": raw_quality,
+            "clean_info": clean_quality,
+            "selected_features": selected,
+            "pipeline_flow": pipeline_flow,
+            "raw_sample": raw_sample,
+            "clean_sample": clean_sample
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Preprocessing failed: {str(e)}")
 
 @router.post("/cluster/kmeans", response_model=ClusteringResult)
 def run_kmeans(params: KMeansParams = Body(...)):
